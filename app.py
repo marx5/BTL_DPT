@@ -4,14 +4,17 @@ import pandas as pd
 import numpy as np
 import tempfile
 from sqlalchemy import create_engine
+from datetime import datetime
 from audio_features import extract_audio_features
 
+# Thông tin MySQL
 MYSQL_USER = 'root'
 MYSQL_PASSWORD = ''
 MYSQL_HOST = 'localhost'
 MYSQL_PORT = '3306'
 MYSQL_DB = 'audio_features_db'
 TABLE_NAME = 'features'
+
 DB_DIR = "audio_db"
 OUTPUTS_DIR = "outputs"
 os.makedirs(OUTPUTS_DIR, exist_ok=True)
@@ -41,9 +44,10 @@ def clear_outputs_folder(outputs_dir):
         except: pass
 
 st.set_page_config(page_title="Truy vấn nhạc cụ bộ hơi", layout="wide")
-st.title("🎷 Hệ thống truy vấn & nhận dạng nhạc cụ bộ hơi (MySQL only)")
+st.title("🎷 Hệ thống truy vấn & nhận dạng nhạc cụ bộ hơi (MySQL)")
 
 left, right = st.columns([1,2])
+
 with left:
     uploaded_file = st.file_uploader("🎼 Chọn file .wav truy vấn", type=["wav"])
     if uploaded_file is not None:
@@ -57,7 +61,7 @@ with left:
         st.markdown("**🎧 Nghe thử file truy vấn:**")
         st.audio(uploaded_file, format="audio/wav")
         st.image(input_spec_path, caption="Ảnh phổ truy vấn", use_container_width=True)
-        # Hiển thị đặc trưng truy vấn (gốc)
+
         st.markdown("**🔎 Đặc trưng truy vấn (gốc)**")
         feature_table = pd.DataFrame(
             [[input_features[k] for k in FEATURE_NAMES.keys()]],
@@ -68,16 +72,26 @@ with left:
 
 with right:
     if uploaded_file is not None:
-        # 1. Đọc DB đặc trưng từ MySQL
         engine = create_engine(f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8mb4")
         db_df = pd.read_sql(f"SELECT * FROM {TABLE_NAME}", engine)
-        # 2. Lấy mean/std từng cột đặc trưng gốc từ DB
         means = db_df[feature_cols].mean()
         stds  = db_df[feature_cols].std()
-        # 3. Tự chuẩn hóa truy vấn
+
         query_vec_raw = np.array([input_features[c] for c in feature_cols])
         query_vec_scaled = (query_vec_raw - means.values) / stds.values
-        # 4. Tính cosine với từng vector đã chuẩn hóa trong DB
+
+        # Lưu đặc trưng truy vấn vào bảng features_queries
+        query_data = {
+            "filename": uploaded_file.name,
+            "upload_time": datetime.now()
+        }
+        for i, col in enumerate(feature_cols):
+            query_data[col] = query_vec_raw[i]
+        for i, col in enumerate(scaled_cols):
+            query_data[col] = query_vec_scaled[i]
+        pd.DataFrame([query_data]).to_sql("features_queries", engine, if_exists="append", index=False)
+
+        # So sánh cosine
         X_db_scaled = db_df[scaled_cols].values
         sim_scores = [cosine_similarity(query_vec_scaled, x) for x in X_db_scaled]
         db_df['cosine'] = sim_scores
@@ -102,7 +116,7 @@ with right:
                     except: pass
                 if os.path.exists(spec_db):
                     st.image(spec_db, caption="Ảnh phổ DB", use_container_width=True)
-        # Xoá file tạm
+
         try:
             os.remove(file_path)
             os.remove(input_spec_path)
