@@ -24,9 +24,9 @@ def get_label_from_filename(filename):
     if "har" in fn: return "Harmonica"
     return "Unknown"
 
-def cosine_similarity(a, b):
-    num = np.dot(a, b)
-    denom = np.linalg.norm(a) * np.linalg.norm(b)
+def cosine_similarity(a, b, w):
+    num = np.sum(w * a * b)
+    denom = (np.sqrt(np.sum(w * a ** 2)) * np.sqrt(np.sum(w * b ** 2)))
     return num / denom if denom != 0 else 0
 
 engine = create_engine(f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8mb4")
@@ -49,7 +49,8 @@ for fname in os.listdir(TEST_DIR):
         feats = extract_audio_features(fpath)
         q_vec_raw = np.array([feats[c] for c in feature_cols])
         q_vec_scaled = (q_vec_raw - means.values) / stds.values
-        sim_scores = [cosine_similarity(q_vec_scaled, x) for x in X_db_scaled]
+        weights = np.array([0.3, 0.3, 0.2, 0.7, 0.9, 1.0, 1.0])  # Trọng số đặc trưng
+        sim_scores = [cosine_similarity(q_vec_scaled, x, weights) for x in X_db_scaled]
         idx_best = np.argmax(sim_scores)
         label_pred = db_labels[idx_best]
         num_test += 1

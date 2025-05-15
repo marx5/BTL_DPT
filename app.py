@@ -31,10 +31,11 @@ FEATURE_NAMES = {
     "pitch": "Độ cao (Hz)"
 }
 
-def cosine_similarity(vec1, vec2):
-    num = np.dot(vec1, vec2)
-    denom = np.linalg.norm(vec1) * np.linalg.norm(vec2)
+def cosine_similarity_weighted(vec1, vec2, weights):
+    num = np.sum(weights * vec1 * vec2)
+    denom = np.sqrt(np.sum(weights * vec1 ** 2)) * np.sqrt(np.sum(weights * vec2 ** 2))
     return num / denom if denom != 0 else 0
+
 
 def clear_outputs_folder(outputs_dir):
     import glob
@@ -93,7 +94,9 @@ with right:
 
         # So sánh cosine
         X_db_scaled = db_df[scaled_cols].values
-        sim_scores = [cosine_similarity(query_vec_scaled, x) for x in X_db_scaled]
+        weights = np.array([0.3, 0.3, 0.2, 0.7, 0.9, 1.0, 1.0])  # theo thứ tự feature_cols
+        sim_scores = [cosine_similarity_weighted(query_vec_scaled, x, weights) for x in X_db_scaled]
+
         db_df['cosine'] = sim_scores
         db_df_sorted = db_df.sort_values(by='cosine', ascending=False)
         top3 = db_df_sorted.head(3)
