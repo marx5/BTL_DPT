@@ -1,0 +1,47 @@
+# Môi trường ảo Python
+venv/
+env/
+ENV/
+.env
+
+# Các file đã biên dịch Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Các file phân phối
+.dist/
+dist/
+build/
+*.egg-info/
+*.egg
+
+# File logs và cache
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# File dữ liệu tạm thời và file media
+outputs/*
+!outputs/.gitkeep
+*.csv
+*.pkl
+.DS_Store
+
+# File cấu hình IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Các file cụ thể cho dự án này
+# Bỏ comment nếu cần bỏ qua các file âm thanh
+# audio_db/
+# audio_test/
+# *.wav
+# *.mp3
