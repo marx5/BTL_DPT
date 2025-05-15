@@ -6,9 +6,7 @@ import matplotlib.pyplot as plt
 def extract_audio_features(file_path, frame_length=2048, hop_length=512,
                           silence_threshold=0.02, silence_min_duration=0.2,
                           save_spectrogram_path=None):
-    """
-    Trích xuất các đặc trưng âm thanh đúng tài liệu thầy Hóa.
-    """
+
     y, sr = librosa.load(file_path, sr=None)
     N = len(y)
 
