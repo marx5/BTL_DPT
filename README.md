@@ -17,9 +17,9 @@
 multimedia_audio_search/
 │
 ├── audio_features.py                   # Module trích xuất đặc trưng
-├── extract_features_to_mysql.py        # Script tạo đặc trưng, chuẩn hóa, lưu vào MySQL (tự động tạo db/bảng, xóa dữ liệu cũ)
+├── extract_features.py                 # Script tạo đặc trưng, chuẩn hóa, lưu vào MySQL (tự động tạo db/bảng, xóa dữ liệu cũ)
 ├── app.py                              # Giao diện web truy vấn, nhận dạng (dùng MySQL)
-├── evaluate_accuracy_from_mysql.py     # Đánh giá độ chính xác với bộ test (dùng MySQL)
+├── test_accuracy.py                    # Đánh giá độ chính xác với bộ test (dùng MySQL)
 ├── requirements.txt                    # Danh sách thư viện cần cài
 ├── README.md                           # Hướng dẫn chi tiết (file này)
 │
