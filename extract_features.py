@@ -55,8 +55,16 @@ conn.close()
 
 # 2. Xóa dữ liệu cũ trong bảng (mỗi lần chạy lại làm mới)
 engine = create_engine(f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8mb4")
-with engine.connect() as connection:
-    connection.execute(text(f"DELETE FROM {TABLE_NAME}"))
+try:
+    with engine.connect() as connection:
+        # Bắt đầu transaction
+        with connection.begin():
+            # Xóa dữ liệu cũ
+            connection.execute(text(f"DELETE FROM {TABLE_NAME}"))
+            print(f"Đã xóa dữ liệu cũ trong bảng {TABLE_NAME}")
+except Exception as e:
+    print(f"Lỗi khi xóa dữ liệu cũ: {e}")
+    exit(1)
 
 # 3. Trích xuất đặc trưng
 if not os.path.isdir(DB_DIR):

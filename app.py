@@ -31,6 +31,26 @@ FEATURE_NAMES = {
     "pitch": "Độ cao (Hz)"
 }
 
+@st.cache_data
+def load_db_data():
+    """
+    Tải dữ liệu từ cơ sở dữ liệu và tính toán các giá trị trung bình, độ lệch chuẩn.
+    Kết quả của hàm này sẽ được cache lại bởi Streamlit.
+    """
+    engine = create_engine(f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8mb4")
+    db_df = pd.read_sql(f"SELECT * FROM {TABLE_NAME}", engine)
+    means = db_df[feature_cols].mean()
+    stds  = db_df[feature_cols].std()
+    return db_df, means, stds
+
+@st.cache_data
+def get_audio_features(file_path, save_spectrogram_path=None):
+    """
+    Trích xuất đặc trưng âm thanh cho một file.
+    Sử dụng cache để tránh tính toán lại nếu file và đường dẫn lưu không đổi.
+    """
+    return extract_audio_features(file_path, save_spectrogram_path=save_spectrogram_path)
+
 def cosine_similarity_weighted(vec1, vec2, weights):
     num = np.sum(weights * vec1 * vec2)
     denom = np.sqrt(np.sum(weights * vec1 ** 2)) * np.sqrt(np.sum(weights * vec2 ** 2))
@@ -58,7 +78,7 @@ with left:
             file_path = tmpf.name
 
         input_spec_path = os.path.join(OUTPUTS_DIR, "input_spec.png")
-        input_features = extract_audio_features(file_path, save_spectrogram_path=input_spec_path)
+        input_features = get_audio_features(file_path, save_spectrogram_path=input_spec_path)
         st.markdown("**🎧 Nghe thử file truy vấn:**")
         st.audio(uploaded_file, format="audio/wav")
         st.image(input_spec_path, caption="Ảnh phổ truy vấn", use_container_width=True)
@@ -73,10 +93,11 @@ with left:
 
 with right:
     if uploaded_file is not None:
-        engine = create_engine(f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8mb4")
-        db_df = pd.read_sql(f"SELECT * FROM {TABLE_NAME}", engine)
-        means = db_df[feature_cols].mean()
-        stds  = db_df[feature_cols].std()
+        # Tải dữ liệu từ CSDL (sử dụng cache)
+        db_df, means, stds = load_db_data()
+        
+        # Kết nối engine riêng cho việc ghi dữ liệu truy vấn (không cần cache)
+        engine_write = create_engine(f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8mb4")
 
         query_vec_raw = np.array([input_features[c] for c in feature_cols])
         query_vec_scaled = (query_vec_raw - means.values) / stds.values
@@ -90,7 +111,7 @@ with right:
             query_data[col] = query_vec_raw[i]
         for i, col in enumerate(scaled_cols):
             query_data[col] = query_vec_scaled[i]
-        pd.DataFrame([query_data]).to_sql("features_queries", engine, if_exists="append", index=False)
+        pd.DataFrame([query_data]).to_sql("features_queries", engine_write, if_exists="append", index=False)
 
         # So sánh cosine
         X_db_scaled = db_df[scaled_cols].values
@@ -115,8 +136,10 @@ with right:
                 spec_db = os.path.join(OUTPUTS_DIR, f"{row['filename']}_spec.png")
                 if not os.path.isfile(spec_db):
                     try:
-                        extract_audio_features(file_in_db, save_spectrogram_path=spec_db)
-                    except: pass
+                        # Sử dụng hàm đã cache để trích xuất đặc trưng cho file từ DB
+                        get_audio_features(file_in_db, save_spectrogram_path=spec_db)
+                    except Exception as e: 
+                        st.warning(f"Lỗi khi tạo ảnh phổ cho {row['filename']}: {e}")
                 if os.path.exists(spec_db):
                     st.image(spec_db, caption="Ảnh phổ DB", use_container_width=True)
 
