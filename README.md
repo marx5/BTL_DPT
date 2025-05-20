@@ -1,13 +1,13 @@
-# HỆ THỐNG TRÍCH XUẤT, LƯU TRỮ, TRUY VẤN & ĐÁNH GIÁ ĐẶC TRƯNG ÂM THANH NHẠC CỤ BỘ HƠI (DÙNG MYSQL 100%)
+# HỆ THỐNG TRÍCH XUẤT, LƯU TRỮ, TRUY VẤN & ĐÁNH GIÁ ĐẶC TRƯNG ÂM THANH NHẠC CỤ BỘ HƠI
 
 ---
 
 ## 1. Mục đích
 
-* Trích xuất đặc trưng âm thanh chuẩn lý thuyết cho file nhạc cụ bộ hơi.
-* Lưu trữ đặc trưng (cả **gốc** và **chuẩn hóa**) vào MySQL hoàn toàn tự động.
-* Truy vấn, nhận dạng âm thanh, so sánh cosine trực tiếp bằng dữ liệu MySQL (không dùng CSV, scaler.pkl).
-* Đánh giá độ chính xác nhận dạng, quản lý dữ liệu cực kỳ linh hoạt.
+* Trích xuất đặc trưng âm thanh cho file nhạc cụ bộ hơi.
+* Lưu trữ đặc trưng (cả **gốc** và **chuẩn hóa**) vào MySQL.
+* Truy vấn, nhận dạng âm thanh, so sánh cosine trực tiếp bằng dữ liệu MySQL.
+* Đánh giá độ chính xác nhận dạng.
 
 ---
 
@@ -45,15 +45,32 @@ python -m venv venv
 **Bước 3:** Kích hoạt môi trường ảo
 
 * **Windows:**
+  * Command Prompt (cmd):
+    ```
+    venv\Scripts\activate.bat
+    ```
+  * PowerShell:
+    ```
+    .\venv\Scripts\Activate.ps1
+    ```
+  * Git Bash:
+    ```
+    source venv/Scripts/activate
+    ```
 
-  ```
-  venv/Scripts/activate
-  ```
 * **MacOS/Linux:**
-
-  ```
-  source venv/bin/activate
-  ```
+  * Bash/Zsh:
+    ```
+    source venv/bin/activate
+    ```
+  * Fish:
+    ```
+    source venv/bin/activate.fish
+    ```
+  * Csh:
+    ```
+    source venv/bin/activate.csh
+    ```
 
 **Bước 4:** Cài đặt thư viện cần thiết
 
@@ -95,7 +112,7 @@ python evaluate_accuracy_from_mysql.py
 * Kết quả:
 
   * In số lần nhận dạng đúng/sai, tính độ chính xác top-1.
-  * Ghi chi tiết từng file test vào `test_accuracy_results.csv` để kiểm tra, báo cáo.
+  * Ghi chi tiết từng file test vào `test_accuracy_results.csv`.
 
 ---
 
@@ -129,3 +146,13 @@ sqlalchemy
 ```
 
 ---
+
+
+
+## Đóng góp
+
+Mọi đóng góp đều được hoan nghênh! Vui lòng tạo issue hoặc pull request.
+
+## License
+
+MIT License
