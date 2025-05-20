@@ -4,6 +4,8 @@ env/
 ENV/
 .env
 
+.gitconfig
+
 # Các file đã biên dịch Python
 __pycache__/
 *.py[cod]
